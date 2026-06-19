@@ -475,6 +475,21 @@
     letter-spacing: 0.04em;
   }
 
+  .seller-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    margin: 1px;
+    text-transform: uppercase;
+  }
+
+  .seller-tags { margin-top: 4px; }
+
   .seller-link {
     display: inline-flex;
     align-items: center;
@@ -496,6 +511,49 @@
     padding-top: 14px;
     border-top: 1px solid var(--border);
   }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    align-items: center;
+  }
+
+  .filter-search {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    flex: 1;
+    min-width: 160px;
+    max-width: 260px;
+  }
+  .filter-search:focus { border-color: var(--accent); }
+  .filter-search::placeholder { color: var(--text-muted); }
+
+  .filter-pill {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-dim);
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-pill:hover { border-color: var(--border-hover); color: var(--text); }
+  .filter-pill.active { background: var(--accent-dim); border-color: rgba(200,169,110,0.35); color: var(--accent); }
 
   .empty-state {
     text-align: center;
@@ -563,17 +621,26 @@
   }
   .link-item:last-child { border-bottom: none; }
 
+  .link-info { flex: 1; overflow: hidden; }
+
   .link-item a {
     color: var(--text);
     text-decoration: none;
     font-size: 13px;
     transition: color 0.2s;
-    flex: 1;
+    display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   .link-item a:hover { color: var(--accent); }
+
+  .link-brand-tag {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
 
   .link-del {
     background: none;
@@ -783,6 +850,20 @@
         Ajouter un vendeur
       </button>
     </div>
+    <div class="filter-bar">
+      <input class="filter-search" type="text" id="seller-search" placeholder="Rechercher…" oninput="renderSellers()">
+      <button class="filter-pill active" data-brand="all" onclick="setBrandFilter('all')">Tous</button>
+      <button class="filter-pill" data-brand="Chrome Hearts" onclick="setBrandFilter('Chrome Hearts')">Chrome Hearts</button>
+      <button class="filter-pill" data-brand="Lacoste" onclick="setBrandFilter('Lacoste')">Lacoste</button>
+      <button class="filter-pill" data-brand="Stone Island" onclick="setBrandFilter('Stone Island')">Stone Island</button>
+      <button class="filter-pill" data-brand="CP Company" onclick="setBrandFilter('CP Company')">CP Company</button>
+      <button class="filter-pill" data-brand="Denim Tears" onclick="setBrandFilter('Denim Tears')">Denim Tears</button>
+      <button class="filter-pill" data-brand="Ami Paris" onclick="setBrandFilter('Ami Paris')">Ami Paris</button>
+      <button class="filter-pill" data-brand="Crampons" onclick="setBrandFilter('Crampons')">Crampons</button>
+      <button class="filter-pill" data-brand="Fourni Puff" onclick="setBrandFilter('Fourni Puff')">Fourni Puff</button>
+      <button class="filter-pill" data-brand="Running" onclick="setBrandFilter('Running')">Running</button>
+      <button class="filter-pill" data-brand="Chaussures" onclick="setBrandFilter('Chaussures')">Chaussures</button>
+    </div>
     <div class="sellers-grid" id="sellers-grid"></div>
   </section>
 
@@ -902,6 +983,243 @@
 
 <script>
 /* ════════════════════════════════════════
+   CATALOGUE DATA (from catalogue reps)
+════════════════════════════════════════ */
+const CATALOGUE = [
+  {
+    brand: "Chrome Hearts",
+    suppliers: [
+      { name: "King Fashion Clothing", url: "https://346176058.x.yupoo.com/categories/4308452", note: "", cats: ["T-shirts","Pulls","Vestes","Pantalons","Accessoires"] },
+      { name: "3125tiger", url: "https://3125tiger.x.yupoo.com/categories/3342218", note: "", cats: ["T-shirts","Pulls","Vestes","Pantalons"] },
+      { name: "800m", url: "https://aa800000000000.x.yupoo.com/categories/4226146", note: "", cats: ["T-shirts","Pulls","Vestes"] },
+      { name: "Perfectreps", url: "https://perfectreps.x.yupoo.com/categories/4654767", note: "", cats: ["T-shirts","Pulls","Vestes","Accessoires"] },
+      { name: "YE factory", url: "https://yefactory.x.yupoo.com/categories/4323056", note: "", cats: ["Vestes","Pulls","Pantalons"] },
+      { name: "Patternreps", url: "https://patternerpp.x.yupoo.com/categories/4605209", note: "", cats: ["T-shirts","Pulls","Vestes"] },
+      { name: "Martin-reps", url: "https://martinreps.x.yupoo.com/categories/4681092", note: "", cats: ["T-shirts","Pulls","Vestes","Pantalons"] },
+      { name: "mook-official", url: "https://mook-official.x.yupoo.com/categories/4015480", note: "", cats: ["T-shirts","Pulls","Vestes"] },
+      { name: "rockets-reps", url: "https://rockets-reps.x.yupoo.com/categories/4615742", note: "", cats: ["T-shirts","Pulls","Vestes"] }
+    ]
+  },
+  {
+    brand: "Lacoste",
+    suppliers: [
+      { name: "French fish store", url: "https://kdi220.x.yupoo.com/categories/4342783", note: "", cats: ["Polos","T-shirts","Pulls","Vestes"] },
+      { name: "Dripy boy", url: "https://dripy-boy.x.yupoo.com/categories/4714563", note: "", cats: ["Polos","T-shirts","Vestes"] },
+      { name: "Taurus reps", url: "https://deateath.x.yupoo.com/categories/4571155", note: "", cats: ["Polos","T-shirts","Pulls"] },
+      { name: "800", url: "https://800millionreps.x.yupoo.com/categories/407749?isSubCate=true", note: "", cats: ["Polos","T-shirts","Pulls","Vestes"] },
+      { name: "3125 Tiger", url: "https://3125tiger.x.yupoo.com/categories/3342214", note: "", cats: ["Polos","T-shirts","Pulls"] },
+      { name: "RY Store", url: "https://original-copy.x.yupoo.com/categories/4653148", note: "", cats: ["Polos","T-shirts"] },
+      { name: "lion-reps", url: "https://lion-reps.x.yupoo.com/categories/4709432", note: "", cats: ["Polos","T-shirts","Vestes"] },
+      { name: "rockets-reps", url: "https://rockets-reps.x.yupoo.com/categories/4730277", note: "", cats: ["Polos","T-shirts","Pulls"] },
+      { name: "repprince", url: "https://repprince.x.yupoo.com/albums?tab=gallery", note: "", cats: ["Polos","T-shirts","Pulls","Vestes"] },
+      { name: "rainbowreps", url: "https://rainbowreps.x.yupoo.com/categories/4829651", note: "", cats: ["Polos","T-shirts"] }
+    ]
+  },
+  {
+    brand: "Stone Island",
+    suppliers: [
+      { name: "Perfect Reps", url: "https://perfectreps.x.yupoo.com/categories/4654771", note: "", cats: ["Vestes","Pulls","Polos","T-shirts"] },
+      { name: "Topstoney", url: "https://topstoneyuk.x.yupoo.com/", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] },
+      { name: "Dripyboy", url: "https://dripy-boy.x.yupoo.com/categories/4716641", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "800m", url: "https://800millionreps.x.yupoo.com/categories/340547?isSubCate=true", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] },
+      { name: "3125tiger", url: "https://3125tiger.x.yupoo.com/categories/4733219", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "Ye factory", url: "https://yefactory.x.yupoo.com/categories/4324436", note: "", cats: ["Vestes","Pulls","Pantalons"] },
+      { name: "premium888", url: "https://premium888.x.yupoo.com/categories/4798212", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "Taurus-reps", url: "https://deateath.x.yupoo.com/categories/4564753", note: "", cats: ["Vestes","Pulls"] },
+      { name: "Mid", url: "https://simple2899.x.zhidian-inc.cn/categories/4589053", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "lion-reps", url: "https://lion-reps.x.yupoo.com/categories/4717739", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "mook-official", url: "https://mook-official.x.yupoo.com/categories/4100510", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] },
+      { name: "Subway Hooligan", url: "https://hunter0824.x.yupoo.com/categories/3910600", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "rockets-reps", url: "https://rockets-reps.x.yupoo.com/categories/4657491", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "Malphite", url: "https://malphite.x.yupoo.com/albums", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] },
+      { name: "xiaoyiyi258", url: "https://xiaoyiyi258.x.yupoo.com/categories/4457091", note: "WA: +8619835780185", cats: ["Vestes","Pulls","T-shirts"] }
+    ]
+  },
+  {
+    brand: "Crampons",
+    suppliers: [
+      { name: "akaboot", url: "https://akaboot.x.yupoo.com/albums", note: "", cats: ["Crampons"] },
+      { name: "dachgang", url: "https://dachang88.x.yupoo.com/albums", note: "mdp: akaboot — WA: +86 152 6095 9949", cats: ["Crampons"] },
+      { name: "bull", url: "https://aaaabull.x.yupoo.com/albums", note: "mdp: aaaaaa", cats: ["Crampons"] },
+      { name: "Tina", url: "https://yao1168.x.yupoo.com/", note: "WA: +852 6736 2952", cats: ["Crampons"] },
+      { name: "askstudio", url: "https://melonyeezy.x.yupoo.com/categories/4715831", note: "", cats: ["Crampons"] }
+    ]
+  },
+  {
+    brand: "Fourni Puff",
+    suppliers: [
+      { name: "sojery", url: "https://sojery.x.yupoo.com/categories/3033459", note: "WA: +86 18148903482", cats: ["Doudounes","Vestes"] },
+      { name: "brucefactory", url: "https://brucefactory.x.yupoo.com/categories/4572218", note: "WA: +86 15180099591", cats: ["Doudounes","Vestes"] },
+      { name: "crissfactory", url: "https://crissfactory.x.yupoo.com/collections/4558276", note: "+86 13870030606", cats: ["Doudounes","Vestes"] },
+      { name: "soccerjersey123", url: "https://soccerjersey123.x.yupoo.com/", note: "+86 18148771929", cats: ["Maillots","Doudounes"] },
+      { name: "Sally (Discord)", url: "https://discord.gg/YquZ8BXrmW", note: "", cats: ["Doudounes","Vestes"] }
+    ]
+  },
+  {
+    brand: "CP Company",
+    suppliers: [
+      { name: "Chaosmade", url: "https://chaosmade.x.yupoo.com/categories/4132805", note: "", cats: ["Vestes","Pulls","T-shirts","Accessoires"] },
+      { name: "Dripyboy", url: "https://dripy-boy.x.yupoo.com/categories/4716633", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "west42", url: "https://west42.x.yupoo.com/categories/4733919", note: "", cats: ["Vestes","Pulls","Pantalons"] },
+      { name: "cpreps", url: "https://cprepscn.x.yupoo.com/categories/4543871", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] },
+      { name: "DragonReps", url: "https://noghost.x.yupoo.com/categories/4692122", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "OldChen", url: "https://jhj88888888.x.yupoo.com/categories/4739003", note: "", cats: ["Vestes","Pulls","T-shirts","Accessoires"] },
+      { name: "lion-reps", url: "https://lion-reps.x.yupoo.com/categories/4700754", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "Martin-reps", url: "https://martinreps.x.yupoo.com/categories/4681157", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] },
+      { name: "rockets-reps", url: "https://rockets-reps.x.yupoo.com/categories/4657489", note: "", cats: ["Vestes","Pulls","T-shirts"] },
+      { name: "Malphite", url: "https://malphite.x.yupoo.com/albums", note: "", cats: ["Vestes","Pulls","T-shirts","Pantalons"] }
+    ]
+  },
+  {
+    brand: "Running",
+    suppliers: [
+      { name: "RepPro", url: "https://repprotop.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "CCOO", url: "https://ccoo-runrep.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Mr Q", url: "https://qqq9999qqq.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "PJS", url: "https://helloworld520.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Lightning", url: "https://lightningrun.x.yupoo.com/albums?page=2", note: "", cats: ["Chaussures"] },
+      { name: "S running", url: "https://sveijuvnasluev.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Terra", url: "https://budgetbonanza.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Whales", url: "https://whales520.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "JHY", url: "https://weidian.com/?userid=1636238954&spider_token=0ab2", note: "", cats: ["Chaussures"] },
+      { name: "Tomato", url: "https://tomato-x.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "LJC", url: "https://ljchhh.x.yupoo.com/", note: "", cats: ["Chaussures"] }
+    ]
+  },
+  {
+    brand: "Chaussures",
+    suppliers: [
+      { name: "WWTOP", url: "https://wwfake100.x.yupoo.com/categories", note: "", cats: ["Chaussures"] },
+      { name: "LJRSneakers", url: "https://ljrsneakers.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "Ovosneakers", url: "https://ovosneaker.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "STSA", url: "https://stsa.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "JMDY", url: "https://tianjin-no1.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Sharkbreeder", url: "https://shark-breeder.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Yolo", url: "https://yolo66.x.yupoo.com/", note: "", cats: ["Chaussures"] },
+      { name: "Umkao", url: "https://umkao.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "VIP Snkrs", url: "https://888vip.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "168shops", url: "https://168shops.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "Pai", url: "https://pai-reps.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "OldChen", url: "https://jhj88888888.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "7PK", url: "https://97shoes.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "God", url: "https://god-1.x.yupoo.com/albums", note: "", cats: ["Chaussures"] },
+      { name: "ASK Studio", url: "https://melonyeezy.x.yupoo.com/albums", note: "", cats: ["Chaussures","Crampons"] },
+      { name: "momokick", url: "https://momokick.x.yupoo.com/albums", note: "", cats: ["Chaussures"] }
+    ]
+  },
+  {
+    brand: "Denim Tears",
+    suppliers: [
+      { name: "Logan", url: "https://loganhere.x.yupoo.com/categories/4550880", note: "", cats: ["T-shirts","Pulls / Sweats","Pantalons"] },
+      { name: "Chaosmade", url: "https://chaosmade.x.yupoo.com/categories/3807670", note: "", cats: ["T-shirts","Pulls / Sweats","Vestes"] },
+      { name: "Ivan", url: "https://ivan-official.x.yupoo.com/categories/4653256", note: "", cats: ["T-shirts","Pulls / Sweats","Pantalons"] },
+      { name: "800m", url: "https://800millionreps.x.yupoo.com/categories/472095?isSubCate=true", note: "", cats: ["T-shirts","Pulls / Sweats","Vestes","Pantalons"] },
+      { name: "Martin reps", url: "https://martinreps.x.yupoo.com/categories/4681155", note: "", cats: ["T-shirts","Pulls / Sweats","Pantalons"] },
+      { name: "lion-reps", url: "https://lion-reps.x.yupoo.com/categories/4601096", note: "", cats: ["T-shirts","Pulls / Sweats","Vestes"] },
+      { name: "mook-official", url: "https://mook-official.x.yupoo.com/categories/4274061", note: "", cats: ["T-shirts","Pulls / Sweats","Pantalons"] },
+      { name: "Subway Hooligan", url: "https://hunter0824.x.yupoo.com/categories/4395033", note: "", cats: ["T-shirts","Pulls / Sweats"] },
+      { name: "rockets-reps", url: "https://rockets-reps.x.yupoo.com/categories/4614611", note: "", cats: ["T-shirts","Pulls / Sweats","Vestes"] },
+      { name: "angelking47", url: "https://angelking47.x.yupoo.com/categories/3848504", note: "", cats: ["T-shirts","Pulls / Sweats","Pantalons"] }
+    ]
+  },
+  {
+    brand: "Ami Paris",
+    suppliers: [
+      { name: "mook-official", url: "https://mook-official.x.yupoo.com/categories/4134556", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes","Pantalons"] },
+      { name: "TopAmi", url: "https://amiparis.x.yupoo.com/albums", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes","Pantalons","Accessoires"] },
+      { name: "800m", url: "https://aa800000000000.x.yupoo.com/categories/4245038", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "3125tiger", url: "https://3125tiger.x.yupoo.com/categories/3341531", note: "", cats: ["Pulls / Sweats","T-shirts","Pantalons"] },
+      { name: "akdingji", url: "https://akdingji.x.yupoo.com/categories/4577535", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "Taurus-reps", url: "https://deateath.x.yupoo.com/categories/4571837", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "Martin reps", url: "https://martinreps.x.yupoo.com/categories/4681090", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes","Pantalons"] },
+      { name: "Chaosmade", url: "https://chaosmade.x.yupoo.com/categories/3524134", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes","Pantalons"] },
+      { name: "premium888", url: "https://premium888.x.yupoo.com/categories/4798379", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "tophotfashion", url: "https://tophotfashion.x.yupoo.com/categories/4644531", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "repsbrothers", url: "https://repsbrothers.x.yupoo.com/categories/4151113", note: "", cats: ["Pulls / Sweats","T-shirts","Pantalons"] },
+      { name: "Mid", url: "https://simple2899.x.zhidian-inc.cn/categories/4034388", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "tiger616", url: "https://tiger616.x.yupoo.com/categories/4608005", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes","Pantalons"] },
+      { name: "lion-reps", url: "https://lion-reps.x.yupoo.com/categories/4588634", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes"] },
+      { name: "rockets-reps", url: "https://rockets-reps.x.yupoo.com/categories/4620551", note: "", cats: ["Pulls / Sweats","T-shirts","Vestes","Pantalons"] }
+    ]
+  }
+];
+
+/* Build a flat deduped sellers list with brand tags */
+function buildSellersFromCatalogue() {
+  const map = {}; // key: name+url → {id, name, type, value, brands, note}
+  CATALOGUE.forEach(brandObj => {
+    brandObj.suppliers.forEach(s => {
+      const key = s.name + '||' + s.url;
+      if (!map[key]) {
+        map[key] = {
+          id: hashStr(key),
+          name: s.name,
+          type: 'url',
+          value: s.url,
+          note: s.note || '',
+          brands: [brandObj.brand]
+        };
+      } else {
+        if (!map[key].brands.includes(brandObj.brand)) {
+          map[key].brands.push(brandObj.brand);
+        }
+        if (s.note && !map[key].note) map[key].note = s.note;
+      }
+    });
+  });
+  return Object.values(map);
+}
+
+/* Build links object {category: [{id,name,url,brand}]} from catalogue */
+function buildLinksFromCatalogue() {
+  const links = {};
+  CATALOGUE.forEach(brandObj => {
+    brandObj.suppliers.forEach(s => {
+      s.cats.forEach(catLabel => {
+        // Map catalogue cat names → site category names
+        const mapped = mapCat(catLabel);
+        if (!mapped) return;
+        if (!links[mapped]) links[mapped] = [];
+        // Avoid duplicate supplier+brand in same cat
+        const exists = links[mapped].some(l => l.url === s.url && l.brand === brandObj.brand);
+        if (!exists) {
+          links[mapped].push({
+            id: hashStr(s.url + mapped + brandObj.brand),
+            name: s.name + ' — ' + brandObj.brand,
+            url: s.url,
+            brand: brandObj.brand
+          });
+        }
+      });
+    });
+  });
+  return links;
+}
+
+function mapCat(label) {
+  const l = label.toLowerCase();
+  if (l.includes('t-shirt')) return 'T-shirts';
+  if (l.includes('veste') || l.includes('doudoune')) return 'Vestes';
+  if (l.includes('pull') || l.includes('sweat')) return 'Pulls / Sweats';
+  if (l.includes('pantalon') || l.includes('survêt')) return 'Survêtements';
+  if (l.includes('chaussure') || l.includes('sneaker') || l.includes('running') || l.includes('crampon') || l.includes('trail')) return 'Chaussures';
+  if (l.includes('polo')) return 'T-shirts'; // polos → t-shirts
+  if (l.includes('accessoire')) return 'Accessoires';
+  if (l.includes('maillot')) return 'Vestes'; // maillots → vestes
+  return null;
+}
+
+function hashStr(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + c;
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+/* ════════════════════════════════════════
    STARFIELD
 ════════════════════════════════════════ */
 (function() {
@@ -1010,8 +1328,29 @@ const LS = {
 };
 
 /* ════════════════════════════════════════
+   SEED DATA ON FIRST LOAD
+════════════════════════════════════════ */
+function seedIfEmpty() {
+  if (!LS.get('seeded_v1')) {
+    LS.set('sellers', buildSellersFromCatalogue());
+    LS.set('links', buildLinksFromCatalogue());
+    LS.set('seeded_v1', true);
+  }
+}
+
+/* ════════════════════════════════════════
    SECTION 1 — VENDEURS
 ════════════════════════════════════════ */
+let activeBrandFilter = 'all';
+
+function setBrandFilter(brand) {
+  activeBrandFilter = brand;
+  document.querySelectorAll('.filter-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.brand === brand);
+  });
+  renderSellers();
+}
+
 function openSellerModal() {
   document.getElementById('s-name').value = '';
   document.getElementById('s-url').value  = '';
@@ -1045,7 +1384,7 @@ function saveSeller() {
   if (!isUrl && !phone) return alert('Veuillez saisir un numéro.');
 
   const sellers = LS.get('sellers') || [];
-  sellers.push({ id: Date.now(), name, type: isUrl ? 'url' : 'phone', value: isUrl ? url : phone });
+  sellers.push({ id: Date.now(), name, type: isUrl ? 'url' : 'phone', value: isUrl ? url : phone, brands: [], note: '' });
   LS.set('sellers', sellers);
   closeSellerModal();
   renderSellers();
@@ -1059,17 +1398,31 @@ function deleteSeller(id) {
 }
 
 function renderSellers() {
-  const sellers = LS.get('sellers') || [];
+  const q = (document.getElementById('seller-search').value || '').toLowerCase();
+  let sellers = LS.get('sellers') || [];
+
+  if (activeBrandFilter !== 'all') {
+    sellers = sellers.filter(s => s.brands && s.brands.includes(activeBrandFilter));
+  }
+  if (q) {
+    sellers = sellers.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      (s.brands && s.brands.some(b => b.toLowerCase().includes(q))) ||
+      (s.note && s.note.toLowerCase().includes(q))
+    );
+  }
+
   const grid = document.getElementById('sellers-grid');
   if (!sellers.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">◇</div>Aucun vendeur enregistré.<br>Ajoutez votre premier contact.</div>`;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">◇</div>Aucun vendeur trouvé.</div>`;
     return;
   }
+
   grid.innerHTML = sellers.map(s => {
     const contact = s.type === 'url'
       ? `<a class="seller-link" href="${escHtml(s.value)}" target="_blank" rel="noopener">
            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8M8 1h3m0 0v3m0-3L5 7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-           ${escHtml(s.value)}
+           Voir le catalogue
          </a>`
       : `<span class="seller-link">
            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 2a1 1 0 011-1h1.5l1 2.5-1 1a7 7 0 003 3l1-1L11 7.5V9a1 1 0 01-1 1 9 9 0 01-8-8z" stroke="currentColor" stroke-width="1.2"/></svg>
@@ -1078,15 +1431,25 @@ function renderSellers() {
     const badge = s.type === 'url'
       ? `<span class="badge badge-url">URL</span>`
       : `<span class="badge badge-phone">Tél.</span>`;
+
+    const brandsHtml = (s.brands && s.brands.length)
+      ? `<div class="seller-tags">${s.brands.map(b => `<span class="seller-tag">${escHtml(b)}</span>`).join('')}</div>`
+      : '';
+    const noteHtml = s.note
+      ? `<div class="seller-meta" style="font-size:11px;color:var(--text-muted)">${escHtml(s.note)}</div>`
+      : '';
+
     return `
       <div class="seller-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
           <span class="seller-name">${escHtml(s.name)}</span>
           ${badge}
         </div>
+        ${brandsHtml}
+        ${noteHtml}
         <div>${contact}</div>
         <div class="seller-footer">
-          <span class="seller-meta">Contact actif</span>
+          <span class="seller-meta">${s.brands && s.brands.length ? s.brands.length + ' marque' + (s.brands.length > 1 ? 's' : '') : 'Contact actif'}</span>
           <button class="btn btn-danger" onclick="deleteSeller(${s.id})">Supprimer</button>
         </div>
       </div>`;
@@ -1144,7 +1507,10 @@ function renderLinks() {
     const listHtml = catLinks.length
       ? `<ul class="link-list">${catLinks.map(l =>
           `<li class="link-item">
-             <a href="${escHtml(l.url)}" target="_blank" rel="noopener" title="${escHtml(l.url)}">${escHtml(l.name)}</a>
+             <div class="link-info">
+               <a href="${escHtml(l.url)}" target="_blank" rel="noopener" title="${escHtml(l.url)}">${escHtml(l.name)}</a>
+               ${l.brand ? `<span class="link-brand-tag">${escHtml(l.brand)}</span>` : ''}
+             </div>
              <button class="link-del" onclick="deleteLink('${escAttr(cat)}', ${l.id})" title="Supprimer">×</button>
            </li>`).join('')}</ul>`
       : `<p style="font-size:12px;color:var(--text-muted);padding:8px 0;">Aucun lien pour cette catégorie.</p>`;
@@ -1301,6 +1667,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ─── INIT ─── */
+seedIfEmpty();
 renderSellers();
 renderLinks();
 loadBS();
